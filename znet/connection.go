@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aceld/zinx/utils"
-	"github.com/aceld/zinx/ziface"
-	"github.com/aceld/zinx/zlog"
+	"github.com/golang-framework/tcpx/utils"
+	"github.com/golang-framework/tcpx/ziface"
+	"github.com/golang-framework/tcpx/zlog"
 )
 
 //Connection 链接

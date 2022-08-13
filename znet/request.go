@@ -1,6 +1,6 @@
 package znet
 
-import "github.com/aceld/zinx/ziface"
+import "github.com/golang-framework/tcpx/ziface"
 
 //Request 请求
 type Request struct {

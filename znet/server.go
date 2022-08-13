@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/aceld/zinx/utils"
-	"github.com/aceld/zinx/ziface"
+	"github.com/golang-framework/tcpx/utils"
+	"github.com/golang-framework/tcpx/ziface"
 )
 
 var zinxLogo = `                                        

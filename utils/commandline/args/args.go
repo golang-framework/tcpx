@@ -1,9 +1,10 @@
 package args
 
 import (
-	"github.com/aceld/zinx/utils/commandline/uflag"
 	"os"
 	"path"
+
+	"github.com/golang-framework/tcpx/utils/commandline/uflag"
 )
 
 type args struct {
@@ -41,6 +42,6 @@ func InitConfigFlag(defaultValue string, tips string) {
 
 func FlagHandle() {
 	if !path.IsAbs(Args.ConfigFile) {
-		Args.ConfigFile = path.Join(Args.ExeAbsDir,Args.ConfigFile)
+		Args.ConfigFile = path.Join(Args.ExeAbsDir, Args.ConfigFile)
 	}
 }

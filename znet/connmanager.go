@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/aceld/zinx/ziface"
+	"github.com/golang-framework/tcpx/ziface"
 )
 
 //ConnManager 连接管理模块

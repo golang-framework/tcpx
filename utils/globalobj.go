@@ -11,12 +11,13 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/aceld/zinx/utils/commandline/args"
-	"github.com/aceld/zinx/utils/commandline/uflag"
-	"github.com/aceld/zinx/ziface"
-	"github.com/aceld/zinx/zlog"
 	"io/ioutil"
 	"os"
+
+	"github.com/golang-framework/tcpx/utils/commandline/args"
+	"github.com/golang-framework/tcpx/utils/commandline/uflag"
+	"github.com/golang-framework/tcpx/ziface"
+	"github.com/golang-framework/tcpx/zlog"
 )
 
 /*
@@ -109,7 +110,7 @@ func init() {
 	}
 
 	// 初始化配置模块flag
-	args.InitConfigFlag( pwd + "/conf/zinx.json","配置文件，如果没有设置，则默认为<exeDir>/conf/zinx.json")
+	args.InitConfigFlag(pwd+"/conf/zinx.json", "配置文件，如果没有设置，则默认为<exeDir>/conf/zinx.json")
 	// 初始化日志模块flag TODO
 	// 解析
 	uflag.Parse()
@@ -124,7 +125,7 @@ func init() {
 		Host:             "0.0.0.0",
 		MaxConn:          12000,
 		MaxPacketSize:    4096,
-		ConfFilePath:     args.Args.ConfigFile ,
+		ConfFilePath:     args.Args.ConfigFile,
 		WorkerPoolSize:   10,
 		MaxWorkerTaskLen: 1024,
 		MaxMsgChanLen:    1024,
@@ -136,4 +137,3 @@ func init() {
 	//NOTE: 从配置文件中加载一些用户配置的参数
 	GlobalObject.Reload()
 }
-

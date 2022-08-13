@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aceld/zinx/ziface"
+	"github.com/golang-framework/tcpx/ziface"
 )
 
 // run in terminal:

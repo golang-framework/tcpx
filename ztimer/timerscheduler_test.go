@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aceld/zinx/zlog"
+	"github.com/golang-framework/tcpx/zlog"
 )
 
 //触发函数
