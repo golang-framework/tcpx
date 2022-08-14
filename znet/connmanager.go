@@ -29,7 +29,7 @@ func (connMgr *ConnManager) Add(conn ziface.IConnection) {
 	connMgr.connections[conn.GetConnID()] = conn
 	connMgr.connLock.Unlock()
 
-	fmt.Println("connection add to ConnManager successfully: conn num = ", connMgr.Len())
+	fmt.Println("»» connection add to connect management successfully: conn num = ", connMgr.Len())
 }
 
 //Remove 删除连接
@@ -39,7 +39,7 @@ func (connMgr *ConnManager) Remove(conn ziface.IConnection) {
 	//删除连接信息
 	delete(connMgr.connections, conn.GetConnID())
 	connMgr.connLock.Unlock()
-	fmt.Println("connection Remove ConnID=", conn.GetConnID(), " successfully: conn num = ", connMgr.Len())
+	fmt.Println("»» connection remove connectId=", conn.GetConnID(), " successfully: conn num = ", connMgr.Len())
 }
 
 //Get 利用ConnID获取链接
@@ -51,7 +51,7 @@ func (connMgr *ConnManager) Get(connID uint32) (ziface.IConnection, error) {
 		return conn, nil
 	}
 
-	return nil, errors.New("connection not found")
+	return nil, errors.New("»» connection not found")
 
 }
 
@@ -75,7 +75,7 @@ func (connMgr *ConnManager) ClearConn() {
 		delete(connMgr.connections, connID)
 	}
 	connMgr.connLock.Unlock()
-	fmt.Println("Clear All Connections successfully: conn num = ", connMgr.Len())
+	fmt.Println("»» clear all connections successfully: conn num = ", connMgr.Len())
 }
 
 //ClearOneConn  利用ConnID获取一个链接 并且删除
@@ -89,10 +89,10 @@ func (connMgr *ConnManager) ClearOneConn(connID uint32) {
 		conn.Stop()
 		//删除
 		delete(connections, connID)
-		fmt.Println("Clear Connections ID:  ", connID, "succeed")
+		fmt.Println("»» clear connectId:  ", connID, "succeed")
 		return
 	}
 
-	fmt.Println("Clear Connections ID:  ", connID, "err")
+	fmt.Println("»» clear connectId:  ", connID, "err")
 	return
 }

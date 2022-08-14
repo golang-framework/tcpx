@@ -1,7 +1,7 @@
 package znet
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang-framework/tcpx/utils"
 	"github.com/golang-framework/tcpx/ziface"
-	"github.com/golang-framework/tcpx/zlog"
 )
 
 //Connection 链接
@@ -59,8 +58,8 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 
 //StartWriter 写消息Goroutine， 用户将数据发送给客户端
 func (c *Connection) StartWriter() {
-	fmt.Println("[Writer Goroutine is running]")
-	defer fmt.Println(c.RemoteAddr().String(), "[conn Writer exit!]")
+	fmt.Println("--+[writer goroutine is running]")
+	defer fmt.Println(c.RemoteAddr().String(), "--+[conn writer exit!]")
 
 	for {
 		select {
@@ -68,11 +67,11 @@ func (c *Connection) StartWriter() {
 			if ok {
 				//有数据要写给客户端
 				if _, err := c.Conn.Write(data); err != nil {
-					fmt.Println("Send Buff Data error:, ", err, " Conn Writer exit")
+					fmt.Println("»» send buf data error:, ", err, " conn writer exit")
 					return
 				}
 			} else {
-				fmt.Println("msgBuffChan is Closed")
+				fmt.Println("»» msg buf chan is closed")
 				break
 			}
 		case <-c.ctx.Done():
@@ -83,8 +82,8 @@ func (c *Connection) StartWriter() {
 
 //StartReader 读消息Goroutine，用于从客户端中读取数据
 func (c *Connection) StartReader() {
-	fmt.Println("[Reader Goroutine is running]")
-	defer fmt.Println(c.RemoteAddr().String(), "[conn Reader exit!]")
+	fmt.Println("--+[reader goroutine is running]")
+	defer fmt.Println(c.RemoteAddr().String(), "--+[conn reader exit!]")
 	defer c.Stop()
 
 	// 创建拆包解包的对象
@@ -93,7 +92,55 @@ func (c *Connection) StartReader() {
 		case <-c.ctx.Done():
 			return
 		default:
+			//-<=======================================================================
+			// Self Define Vehicle Terminals
+			// Message Header & Message Border
+			// Sample
+			// - GPS DATA :7e 0200 0019 100000716234 0003 04000000 00000108 011e8b38 0457c217 0000 03 220809145240 2e 7e
+			// - 7e ... 7e 包头包尾
+			// = 消息头 [加上包头标识符2字节共23+2=25字节][固定长度]
+			// - 0200			[位置汇报][4字节]
+			// - 0019			[包长度][4字节]
+			// - 100000716234	[终端识别号][12字节]
+			// - 0003			[消息流水号][3字节]
+			// = 消息体 [字节数浮动, 根据包长度0019+包尾标识符2字节组成]
+			// - 04000000		[报警标识位]
+			// - 00000108		[状态标识位]
+			// - 011e8b38		[纬度]
+			// - 0457c217		[经度]
+			// - 0000			[速度]
+			// - 03				[方向]
+			// - 220809145240	[时间]
+			// - 2e				[BCC 校验码]
+			//-<=======================================================================
 
+			// - Get Message Header
+			bufHeader := make([]byte, 5)
+			numHeader, errHeader := c.Conn.Read(bufHeader)
+			if errHeader != nil {
+				return
+			}
+
+			bytHeader := bufHeader[:numHeader]
+
+			// - Follow the Packet Length From the Parameters in Message Header and Get Message Border
+			bufBorder := make([]byte, 5)
+			numBorder, errBorder := c.Conn.Read(bufBorder)
+			if errBorder != nil {
+				return
+			}
+
+			bytBorder := bufBorder[:numBorder]
+
+			var buf bytes.Buffer
+
+			buf.Write(bytHeader)
+			buf.Write(bytBorder)
+
+			bytSource := buf.Bytes()
+			buf.Reset()
+
+			// Packet & UnPacket
 			//d := make([]byte, 1024)
 			//if _, err := io.ReadFull(c.Conn, d); err != nil {
 			//	fmt.Println("read msg head error ", err)
@@ -101,13 +148,6 @@ func (c *Connection) StartReader() {
 			//}
 			//
 			//fmt.Println(string(d))
-
-			scanner := bufio.NewScanner(c.Conn)
-			if ok := scanner.Scan(); !ok {
-				zlog.Debugf("scanner error")
-			}
-
-			d := scanner.Text()
 
 			//读取客户端的Msg head
 			//fmt.Println(c.TCPServer.Packet().GetHeadLen())
@@ -138,8 +178,8 @@ func (c *Connection) StartReader() {
 			var msg ziface.IMessage = &Message{}
 
 			msg.SetMsgID(uint32(0))
-			msg.SetData([]byte(d))
-			msg.SetDataLen(uint32(len(d)))
+			msg.SetData([]byte(bytSource))
+			msg.SetDataLen(uint32(len(bytSource)))
 
 			//得到当前客户端请求的Request数据
 			req := Request{
@@ -200,19 +240,21 @@ func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 	c.RLock()
 	defer c.RUnlock()
 	if c.isClosed == true {
-		return errors.New("connection closed when send msg")
+		return errors.New("»» connection closed when send msg")
 	}
 
 	//将data封包，并且发送
-	dp := c.TCPServer.Packet()
-	msg, err := dp.Pack(NewMsgPackage(msgID, data))
-	if err != nil {
-		fmt.Println("Pack error msg ID = ", msgID)
-		return errors.New("Pack error msg ")
-	}
+	//dp := c.TCPServer.Packet()
+	//msg, err := dp.Pack(NewMsgPackage(msgID, data))
+	//if err != nil {
+	//	fmt.Println("Pack error msg ID = ", msgID)
+	//	return errors.New("Pack error msg ")
+	//}
+
+	msg := data
 
 	//写回客户端
-	_, err = c.Conn.Write(msg)
+	_, err := c.Conn.Write(msg)
 	return err
 }
 
@@ -224,21 +266,23 @@ func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 	defer idleTimeout.Stop()
 
 	if c.isClosed == true {
-		return errors.New("Connection closed when send buff msg")
+		return errors.New("»» connection closed when send buff msg")
 	}
 
 	//将data封包，并且发送
-	dp := c.TCPServer.Packet()
-	msg, err := dp.Pack(NewMsgPackage(msgID, data))
-	if err != nil {
-		fmt.Println("Pack error msg ID = ", msgID)
-		return errors.New("Pack error msg ")
-	}
+	//dp := c.TCPServer.Packet()
+	//msg, err := dp.Pack(NewMsgPackage(msgID, data))
+	//if err != nil {
+	//	fmt.Println("Pack error msg ID = ", msgID)
+	//	return errors.New("Pack error msg ")
+	//}
+
+	msg := data
 
 	// 发送超时
 	select {
 	case <-idleTimeout.C:
-		return errors.New("send buff msg timeout")
+		return errors.New("»» send buff msg timeout")
 	case c.msgBuffChan <- msg:
 		return nil
 	}
@@ -268,7 +312,7 @@ func (c *Connection) GetProperty(key string) (interface{}, error) {
 		return value, nil
 	}
 
-	return nil, errors.New("no property found")
+	return nil, errors.New("»» no property found")
 }
 
 //RemoveProperty 移除链接属性
@@ -296,7 +340,7 @@ func (c *Connection) finalizer() {
 		return
 	}
 
-	fmt.Println("Conn Stop()...ConnID = ", c.ConnID)
+	fmt.Println("»» conn stop()... connID = ", c.ConnID)
 
 	// 关闭socket链接
 	_ = c.Conn.Close()

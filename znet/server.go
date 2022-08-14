@@ -8,19 +8,6 @@ import (
 	"github.com/golang-framework/tcpx/ziface"
 )
 
-var zinxLogo = `                                        
-              ██                        
-              ▀▀                        
- ████████   ████     ██▄████▄  ▀██  ██▀ 
-     ▄█▀      ██     ██▀   ██    ████   
-   ▄█▀        ██     ██    ██    ▄██▄   
- ▄██▄▄▄▄▄  ▄▄▄██▄▄▄  ██    ██   ▄█▀▀█▄  
- ▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀  ▀▀    ▀▀  ▀▀▀  ▀▀▀ 
-                                        `
-var topLine = `┌──────────────────────────────────────────────────────┐`
-var borderLine = `│`
-var bottomLine = `└──────────────────────────────────────────────────────┘`
-
 //Server 接口实现，定义一个Server服务类
 type Server struct {
 	//服务器的名称
@@ -45,7 +32,7 @@ type Server struct {
 
 //NewServer 创建一个服务器句柄
 func NewServer(opts ...Option) ziface.IServer {
-	printLogo()
+	printSystemStartMessage()
 
 	s := &Server{
 		Name:       utils.GlobalObject.Name,
@@ -68,7 +55,8 @@ func NewServer(opts ...Option) ziface.IServer {
 
 //Start 开启网络服务
 func (s *Server) Start() {
-	fmt.Printf("[START] Server name: %s,listenner at IP: %s, Port %d is starting\n", s.Name, s.IP, s.Port)
+	fmt.Printf("--+[start server name: %s,listenner at IP: %s, Port %d is starting ------]\n", s.Name, s.IP, s.Port)
+	fmt.Printf("--+[-----------------------------------------------------------------------------------------------------]\n")
 
 	//开启一个go去做服务端Linster业务
 	go func() {
@@ -78,7 +66,7 @@ func (s *Server) Start() {
 		//1 获取一个TCP的Addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {
-			fmt.Println("resolve tcp addr err: ", err)
+			fmt.Println("»» resolve tcp addr err: ", err)
 			return
 		}
 
@@ -89,7 +77,7 @@ func (s *Server) Start() {
 		}
 
 		//已经监听成功
-		fmt.Println("start Zinx server  ", s.Name, " succ, now listenning...")
+		fmt.Println("--+[start tcp server]", s.Name, " connect success & listening ...")
 
 		//TODO server.go 应该有一个自动生成ID的方法
 		var cID uint32
@@ -100,10 +88,10 @@ func (s *Server) Start() {
 			//3.1 阻塞等待客户端建立连接请求
 			conn, err := listener.AcceptTCP()
 			if err != nil {
-				fmt.Println("Accept err ", err)
+				fmt.Println("»» accept error ", err)
 				continue
 			}
-			fmt.Println("Get conn remote addr = ", conn.RemoteAddr().String())
+			fmt.Println("»» get conn remote addr = ", conn.RemoteAddr().String())
 
 			//3.2 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
 			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
@@ -123,7 +111,7 @@ func (s *Server) Start() {
 
 //Stop 停止服务
 func (s *Server) Stop() {
-	fmt.Println("[STOP] Zinx server , name ", s.Name)
+	fmt.Println("--+[stop] tcp server, name ", s.Name)
 
 	//将其他需要清理的连接信息或者其他信息 也要一并停止或者清理
 	s.ConnMgr.ClearConn()
@@ -162,7 +150,7 @@ func (s *Server) SetOnConnStop(hookFunc func(ziface.IConnection)) {
 //CallOnConnStart 调用连接OnConnStart Hook函数
 func (s *Server) CallOnConnStart(conn ziface.IConnection) {
 	if s.OnConnStart != nil {
-		fmt.Println("---> CallOnConnStart....")
+		fmt.Println("»» CallOnConnStart....")
 		s.OnConnStart(conn)
 	}
 }
@@ -170,7 +158,7 @@ func (s *Server) CallOnConnStart(conn ziface.IConnection) {
 //CallOnConnStop 调用连接OnConnStop Hook函数
 func (s *Server) CallOnConnStop(conn ziface.IConnection) {
 	if s.OnConnStop != nil {
-		fmt.Println("---> CallOnConnStop....")
+		fmt.Println("»» CallOnConnStop....")
 		s.OnConnStop(conn)
 	}
 }
@@ -179,16 +167,10 @@ func (s *Server) Packet() ziface.Packet {
 	return s.packet
 }
 
-func printLogo() {
-	fmt.Println(zinxLogo)
-	fmt.Println(topLine)
-	fmt.Println(fmt.Sprintf("%s [Github] https://github.com/aceld                    %s", borderLine, borderLine))
-	fmt.Println(fmt.Sprintf("%s [tutorial] https://www.yuque.com/aceld/npyr8s/bgftov %s", borderLine, borderLine))
-	fmt.Println(bottomLine)
-	fmt.Printf("[Zinx] Version: %s, MaxConn: %d, MaxPacketSize: %d\n",
-		utils.GlobalObject.Version,
-		utils.GlobalObject.MaxConn,
-		utils.GlobalObject.MaxPacketSize)
+func printSystemStartMessage() {
+	fmt.Println("--+[-----------------------------------------------------------------------------------------------------]")
+	fmt.Println("--+[START TCP SERVER ------------------------------------------------------------------------------------]")
+	fmt.Println("--+[VEHICLE MANAGEMENT SYSTEM ---------------------------------------------------------------------------]")
 }
 
 func init() {

@@ -41,7 +41,7 @@ func (mh *MsgHandle) SendMsgToTaskQueue(request ziface.IRequest) {
 func (mh *MsgHandle) DoMsgHandler(request ziface.IRequest) {
 	handler, ok := mh.Apis[request.GetMsgID()]
 	if !ok {
-		fmt.Println("api msgID = ", request.GetMsgID(), " is not FOUND!")
+		fmt.Println("»» api msgId = ", request.GetMsgID(), " is not found!")
 		return
 	}
 
@@ -59,12 +59,12 @@ func (mh *MsgHandle) AddRouter(msgID uint32, router ziface.IRouter) {
 	}
 	//2 添加msg与api的绑定关系
 	mh.Apis[msgID] = router
-	fmt.Println("Add api msgID = ", msgID)
+	fmt.Println("--+[Add api msgID = ", msgID, " ---------------------------------------------------------------------------------]")
 }
 
 //StartOneWorker 启动一个Worker工作流程
 func (mh *MsgHandle) StartOneWorker(workerID int, taskQueue chan ziface.IRequest) {
-	fmt.Println("Worker ID = ", workerID, " is started.")
+	fmt.Println("»» » Worker is started & ID = ", workerID)
 	//不断的等待队列中的消息
 	for {
 		select {
