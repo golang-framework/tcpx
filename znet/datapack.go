@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"github.com/golang-framework/tcpx/utils"
+	"github.com/golang-framework/tcpx/confs"
 	"github.com/golang-framework/tcpx/ziface"
 )
 
@@ -67,7 +67,7 @@ func (dp *DataPack) Unpack(binaryData []byte) (ziface.IMessage, error) {
 	}
 
 	//判断dataLen的长度是否超出我们允许的最大包长度
-	if utils.GlobalObject.MaxPacketSize > 0 && msg.DataLen > utils.GlobalObject.MaxPacketSize {
+	if confs.MaxPacketSize > 0 && msg.DataLen > confs.MaxPacketSize {
 		return nil, errors.New("too large msg data received")
 	}
 

@@ -1,15 +1,16 @@
 package znet
 
 import (
-	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/golang-framework/tcpx/utils"
+	"github.com/golang-framework/tcpx/confs"
 	"github.com/golang-framework/tcpx/ziface"
 )
 
@@ -47,7 +48,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		ConnID:      connID,
 		isClosed:    false,
 		MsgHandler:  msgHandler,
-		msgBuffChan: make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
+		msgBuffChan: make(chan []byte, confs.MaxMsgChanLen),
 		property:    nil,
 	}
 
@@ -58,8 +59,8 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 
 //StartWriter 写消息Goroutine， 用户将数据发送给客户端
 func (c *Connection) StartWriter() {
-	fmt.Println("--+[writer goroutine is running]")
-	defer fmt.Println(c.RemoteAddr().String(), "--+[conn writer exit!]")
+	fmt.Println("»» » writer goroutine is running «")
+	defer fmt.Println("»» » conn writer exit « ", c.RemoteAddr().String())
 
 	for {
 		select {
@@ -82,11 +83,10 @@ func (c *Connection) StartWriter() {
 
 //StartReader 读消息Goroutine，用于从客户端中读取数据
 func (c *Connection) StartReader() {
-	fmt.Println("--+[reader goroutine is running]")
-	defer fmt.Println(c.RemoteAddr().String(), "--+[conn reader exit!]")
+	fmt.Println("»» » reader goroutine is running «")
+	defer fmt.Println("»» » conn reader exit « ", c.RemoteAddr().String())
 	defer c.Stop()
 
-	// 创建拆包解包的对象
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -98,11 +98,11 @@ func (c *Connection) StartReader() {
 			// Sample
 			// - GPS DATA :7e 0200 0019 100000716234 0003 04000000 00000108 011e8b38 0457c217 0000 03 220809145240 2e 7e
 			// - 7e ... 7e 包头包尾
-			// = 消息头 [加上包头标识符2字节共23+2=25字节][固定长度]
-			// - 0200			[位置汇报][4字节]
-			// - 0019			[包长度][4字节]
-			// - 100000716234	[终端识别号][12字节]
-			// - 0003			[消息流水号][3字节]
+			// = 消息头 [加上包头标识符1字节共12+1=13字节][固定长度]
+			// - 0200			[位置汇报][2字节]
+			// - 0019			[包长度][2字节]
+			// - 100000716234	[终端识别号][6字节]
+			// - 0003			[消息流水号][2字节]
 			// = 消息体 [字节数浮动, 根据包长度0019+包尾标识符2字节组成]
 			// - 04000000		[报警标识位]
 			// - 00000108		[状态标识位]
@@ -114,87 +114,96 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			// - Get Message Header
-			bufHeader := make([]byte, 5)
-			numHeader, errHeader := c.Conn.Read(bufHeader)
-			if errHeader != nil {
+			//bytSource := hex.EncodeToString(bufSource[:numSource])
+			//fmt.Println(bufSource[:numSource])
+			//fmt.Println([]byte(bytSource))
+			//h_data, _ := hex.DecodeString("04")
+			//fmt.Println(h_data)
+
+			bufSource := make([]byte, 1024)
+			numSource, errSource := c.Conn.Read(bufSource)
+			if errSource != nil {
 				return
 			}
 
-			bytHeader := bufHeader[:numHeader]
+			strSource := hex.EncodeToString(bufSource[:numSource])
+			arrSource := strings.Split(strSource, "7e")
 
-			// - Follow the Packet Length From the Parameters in Message Header and Get Message Border
-			bufBorder := make([]byte, 5)
-			numBorder, errBorder := c.Conn.Read(bufBorder)
-			if errBorder != nil {
-				return
+			if len(arrSource) < 3 {
+				continue
 			}
 
-			bytBorder := bufBorder[:numBorder]
-
-			var buf bytes.Buffer
-
-			buf.Write(bytHeader)
-			buf.Write(bytBorder)
-
-			bytSource := buf.Bytes()
-			buf.Reset()
-
-			// Packet & UnPacket
-			//d := make([]byte, 1024)
-			//if _, err := io.ReadFull(c.Conn, d); err != nil {
-			//	fmt.Println("read msg head error ", err)
-			//	return
-			//}
-			//
-			//fmt.Println(string(d))
-
-			//读取客户端的Msg head
-			//fmt.Println(c.TCPServer.Packet().GetHeadLen())
-			//headData := make([]byte, c.TCPServer.Packet().GetHeadLen())
-			//if _, err := io.ReadFull(c.Conn, headData); err != nil {
-			//	fmt.Println("read msg head error ", err)
-			//	return
-			//}
-
-			//拆包，得到msgID 和 datalen 放在msg中
-			//msg, err := c.TCPServer.Packet().Unpack(headData)
-			//if err != nil {
-			//	fmt.Println("unpack error ", err)
-			//	return
-			//}
-
-			//根据 dataLen 读取 data，放在msg.Data中
-			//var data []byte
-			//if msg.GetDataLen() > 0 {
-			//	data = make([]byte, msg.GetDataLen())
-			//	if _, err := io.ReadFull(c.Conn, data); err != nil {
-			//		fmt.Println("read msg data error ", err)
-			//		return
-			//	}
-			//}
-			//msg.SetData(data)
-
-			var msg ziface.IMessage = &Message{}
-
-			msg.SetMsgID(uint32(0))
-			msg.SetData([]byte(bytSource))
-			msg.SetDataLen(uint32(len(bytSource)))
-
-			//得到当前客户端请求的Request数据
-			req := Request{
-				conn: c,
-				msg:  msg,
+			startNum := 0
+			if arrSource[startNum] != "" {
+				arrSource = arrSource[1:]
 			}
 
-			if utils.GlobalObject.WorkerPoolSize > 0 {
-				//已经启动工作池机制，将消息交给Worker处理
-				c.MsgHandler.SendMsgToTaskQueue(&req)
-			} else {
-				//从绑定好的消息和对应的处理方法中执行对应的Handle方法
-				go c.MsgHandler.DoMsgHandler(&req)
+			endedNum := len(arrSource) - 1
+			if arrSource[endedNum] != "" {
+				arrSource = arrSource[:endedNum-1]
+			}
+
+			if len(arrSource) <= 0 {
+				continue
+			}
+
+			res := make([]string, 0)
+
+			for _, src := range arrSource {
+				if src != "" {
+					res = append(res, src)
+				}
+			}
+
+			if len(res) < 1 {
+				continue
+			}
+
+			for _, v := range res {
+				c.FormatMsg(&v)
+				businessNum := c.MsgType(string([]rune(v)[:4]))
+				if businessNum != 9999 {
+					c.SendReqToTaskQueue(businessNum, []byte(v), uint32(len(v)))
+				}
 			}
 		}
+	}
+}
+
+func (c *Connection) FormatMsg(data *string) {
+	*data = strings.Replace(*data, "7d01", "7d", -1)
+	*data = strings.Replace(*data, "7d02", "7e", -1)
+}
+
+func (c *Connection) MsgType(no string) uint32 {
+	switch no {
+	case "0200":
+		return uint32(0)
+
+	default:
+		return uint32(9999)
+	}
+}
+
+func (c *Connection) SendReqToTaskQueue(msgId uint32, data []byte, dataLen uint32) {
+	var msg ziface.IMessage = &Message{}
+
+	msg.SetMsgID(msgId)
+	msg.SetData(data)
+	msg.SetDataLen(dataLen)
+
+	//得到当前客户端请求的Request数据
+	req := Request{
+		conn: c,
+		msg:  msg,
+	}
+
+	if confs.MaxWorkerPoolSize > 0 {
+		//已经启动工作池机制，将消息交给Worker处理
+		c.MsgHandler.SendMsgToTaskQueue(&req)
+	} else {
+		//从绑定好的消息和对应的处理方法中执行对应的Handle方法
+		go c.MsgHandler.DoMsgHandler(&req)
 	}
 }
 

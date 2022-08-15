@@ -10,7 +10,7 @@
 // 当前文件描述:
 // @Title  iconnmanager.go
 // @Description    连接管理相关,包括添加、删除、通过一个连接ID获得连接对象，当前连接数量、清空全部连接等方法
-// @Author  Aceld - Thu Mar 11 10:32:29 CST 2019
+// @Author  TCPX - Vehicle System - Thu Mar 11 10:32:29 CST 2019
 package ziface
 
 /*

@@ -1,9 +1,9 @@
 package ztimer
 
 /**
-* @Author: Aceld(刘丹冰)
+* @Author: TCPX - Vehicle System
 * @Date: 2019/5/9 10:14
-* @Mail: danbing.at@gmail.com
+* @Mail: --
 *
 *  时间轮定时器调度器单元测试
  */

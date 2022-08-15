@@ -1,7 +1,7 @@
 /**
-* @Author: Aceld
+* @Author: TCPX - Vehicle System
 * @Date: 2019/5/5 10:14
-* @Mail: danbing.at@gmail.com
+* @Mail: --
 *
 * 针对timer.go做单元测试，主要测试定时器相关接口 依赖模块delayFunc.go
  */

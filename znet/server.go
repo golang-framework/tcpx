@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/golang-framework/tcpx/utils"
+	"github.com/golang-framework/tcpx/confs"
 	"github.com/golang-framework/tcpx/ziface"
 )
 
@@ -35,10 +35,10 @@ func NewServer(opts ...Option) ziface.IServer {
 	printSystemStartMessage()
 
 	s := &Server{
-		Name:       utils.GlobalObject.Name,
+		Name:       confs.Name,
 		IPVersion:  "tcp4",
-		IP:         utils.GlobalObject.Host,
-		Port:       utils.GlobalObject.TCPPort,
+		IP:         confs.TCPHost,
+		Port:       confs.TCPPort,
 		msgHandler: NewMsgHandle(),
 		ConnMgr:    NewConnManager(),
 		packet:     NewDataPack(),
@@ -78,6 +78,7 @@ func (s *Server) Start() {
 
 		//已经监听成功
 		fmt.Println("--+[start tcp server]", s.Name, " connect success & listening ...")
+		fmt.Println("»» » «")
 
 		//TODO server.go 应该有一个自动生成ID的方法
 		var cID uint32
@@ -94,7 +95,7 @@ func (s *Server) Start() {
 			fmt.Println("»» get conn remote addr = ", conn.RemoteAddr().String())
 
 			//3.2 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
-			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+			if s.ConnMgr.Len() >= confs.MaxConn {
 				conn.Close()
 				continue
 			}

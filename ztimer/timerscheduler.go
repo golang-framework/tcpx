@@ -1,9 +1,9 @@
 package ztimer
 
 /**
-* @Author: Aceld
+* @Author: TCPX - Vehicle System
 * @Date: 2019/5/8 17:43
-* @Mail: danbing.at@gmail.com
+* @Mail: --
 *
 *  时间轮调度器
 *   依赖模块，delayfunc.go  timer.go timewheel.go

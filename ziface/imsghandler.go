@@ -10,7 +10,7 @@
 // 当前文件描述:
 // @Title  imsghandler.go
 // @Description  提供worker启动、处理消息业务调用等接口
-// @Author  Aceld - Thu Mar 11 10:32:29 CST 2019
+// @Author  TCPX - Vehicle System - Thu Mar 11 10:32:29 CST 2019
 package ziface
 
 /*

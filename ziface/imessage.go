@@ -10,7 +10,7 @@
 // 当前文件描述:
 // @Title  imessage.go
 // @Description  提供消息的基本方法
-// @Author  Aceld - Thu Mar 11 10:32:29 CST 2019
+// @Author  TCPX - Vehicle System - Thu Mar 11 10:32:29 CST 2019
 package ziface
 
 /*

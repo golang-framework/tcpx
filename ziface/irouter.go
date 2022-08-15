@@ -10,7 +10,7 @@
 // 当前文件描述:
 // @Title  irouter.go
 // @Description  提供消息路由全部接口声明
-// @Author  Aceld - Thu Mar 11 10:32:29 CST 2019
+// @Author  TCPX - Vehicle System - Thu Mar 11 10:32:29 CST 2019
 package ziface
 
 /*
