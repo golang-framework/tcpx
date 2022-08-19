@@ -9,7 +9,7 @@ var (
 	TCPHost = "0.0.0.0"
 	TCPPort = 8999
 
-	MaxConn              = 20000
+	MaxConn              = 50000
 	MaxPacketSize uint32 = 4096
 
 	MaxWorkerPoolSize uint32 = 10

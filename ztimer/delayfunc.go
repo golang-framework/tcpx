@@ -8,8 +8,6 @@ package ztimer
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/golang-framework/tcpx/zlog"
 )
 
 /*
@@ -41,7 +39,7 @@ func (df *DelayFunc) String() string {
 func (df *DelayFunc) Call() {
 	defer func() {
 		if err := recover(); err != nil {
-			zlog.Error(df.String(), "Call err: ", err)
+			
 		}
 	}()
 

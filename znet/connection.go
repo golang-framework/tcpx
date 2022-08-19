@@ -1,12 +1,12 @@
 package znet
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
-	"strings"
 	"sync"
 	"time"
 
@@ -114,32 +114,27 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			//bytSource := hex.EncodeToString(bufSource[:numSource])
-			//fmt.Println(bufSource[:numSource])
-			//fmt.Println([]byte(bytSource))
-			//h_data, _ := hex.DecodeString("04")
-			//fmt.Println(h_data)
-
 			bufSource := make([]byte, 1024)
 			numSource, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
 				return
 			}
 
-			strSource := hex.EncodeToString(bufSource[:numSource])
-			arrSource := strings.Split(strSource, "7e")
+			// 测试: 打出收到的二进制文件
+			//fmt.Println("»» ", bufSource[:numSource])
 
+			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
 				continue
 			}
 
 			startNum := 0
-			if arrSource[startNum] != "" {
+			if len(arrSource[startNum]) != 0 {
 				arrSource = arrSource[1:]
 			}
 
 			endedNum := len(arrSource) - 1
-			if arrSource[endedNum] != "" {
+			if len(arrSource[endedNum]) != 0 {
 				arrSource = arrSource[:endedNum-1]
 			}
 
@@ -147,10 +142,10 @@ func (c *Connection) StartReader() {
 				continue
 			}
 
-			res := make([]string, 0)
+			res := make([][]byte, 0)
 
 			for _, src := range arrSource {
-				if src != "" {
+				if len(src) != 0 {
 					res = append(res, src)
 				}
 			}
@@ -160,19 +155,21 @@ func (c *Connection) StartReader() {
 			}
 
 			for _, v := range res {
-				c.FormatMsg(&v)
-				businessNum := c.MsgType(string([]rune(v)[:4]))
+				if bytes.Contains(v, []byte{0x7d, 0x01}) {
+					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+				}
+
+				if bytes.Contains(v, []byte{0x7d, 0x02}) {
+					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+				}
+
+				businessNum := c.MsgType(hex.EncodeToString(v[:2]))
 				if businessNum != 9999 {
-					c.SendReqToTaskQueue(businessNum, []byte(v), uint32(len(v)))
+					c.SendReqToTaskQueue(businessNum, v, uint32(len(v)))
 				}
 			}
 		}
 	}
-}
-
-func (c *Connection) FormatMsg(data *string) {
-	*data = strings.Replace(*data, "7d01", "7d", -1)
-	*data = strings.Replace(*data, "7d02", "7e", -1)
 }
 
 func (c *Connection) MsgType(no string) uint32 {
