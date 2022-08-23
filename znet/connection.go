@@ -125,7 +125,7 @@ func (c *Connection) StartReader() {
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
-				continue
+				break
 			}
 
 			startNum := 0
@@ -139,7 +139,7 @@ func (c *Connection) StartReader() {
 			}
 
 			if len(arrSource) <= 0 {
-				continue
+				break
 			}
 
 			res := make([][]byte, 0)
@@ -151,7 +151,7 @@ func (c *Connection) StartReader() {
 			}
 
 			if len(res) < 1 {
-				continue
+				break
 			}
 
 			for _, v := range res {
