@@ -121,7 +121,8 @@ func (c *Connection) StartReader() {
 			}
 
 			// 测试: 打出收到的二进制文件
-			//fmt.Println("»» ", bufSource[:numSource])
+			fmt.Println("»» test » --------------------------------------")
+			fmt.Println("»» test » get client source data", bufSource[:numSource])
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
@@ -163,11 +164,15 @@ func (c *Connection) StartReader() {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
 
+				fmt.Println("»» test » get client data", bufSource[:numSource])
+
 				businessNum := c.MsgType(hex.EncodeToString(v[:2]))
 				if businessNum != 9999 {
 					c.SendReqToTaskQueue(businessNum, v, uint32(len(v)))
 				}
 			}
+
+			fmt.Println("»» test » --------------------------------------")
 		}
 	}
 }
