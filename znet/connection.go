@@ -172,7 +172,7 @@ func (c *Connection) StartReader() {
 				}
 			}
 
-			fmt.Println("»» test » --------------------------------------")
+			fmt.Println("»» test » connID=", c.ConnID, " --------------------------------------")
 		}
 	}
 }
