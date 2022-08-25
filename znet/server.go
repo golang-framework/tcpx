@@ -58,7 +58,7 @@ func (s *Server) Start() {
 	fmt.Printf("--+[start server name: %s,listenner at IP: %s, Port %d is starting ------]\n", s.Name, s.IP, s.Port)
 	fmt.Printf("--+[-----------------------------------------------------------------------------------------------------]\n")
 
-	//开启一个go去做服务端Linster业务
+	//开启一个go去做服务端Listener业务
 	go func() {
 		//0 启动worker工作池机制
 		s.msgHandler.StartWorkerPool()
@@ -96,7 +96,7 @@ func (s *Server) Start() {
 
 			//3.2 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
 			if s.ConnMgr.Len() >= confs.MaxConn {
-				conn.Close()
+				_ = conn.Close()
 				continue
 			}
 
@@ -124,7 +124,7 @@ func (s *Server) Serve() {
 
 	//TODO Server.Serve() 是否在启动服务的时候 还要处理其他的事情呢 可以在这里添加
 
-	//阻塞,否则主Go退出， listenner的go将会退出
+	//阻塞,否则主Go退出， Listener的go将会退出
 	select {}
 }
 

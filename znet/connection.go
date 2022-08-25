@@ -122,7 +122,8 @@ func (c *Connection) StartReader() {
 
 			// 测试: 打出收到的二进制文件
 			fmt.Println("»» test » --------------------------------------")
-			fmt.Println("»» test » get client source data", bufSource[:numSource])
+			fmt.Println("»» test » get client source data byte", bufSource[:numSource])
+			fmt.Println("»» test » to hex: ", hex.EncodeToString(bufSource[:numSource]))
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
@@ -164,7 +165,8 @@ func (c *Connection) StartReader() {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
 
-				fmt.Println("»» test » get client data", bufSource[:numSource])
+				fmt.Println("»» test » get client data", v)
+				fmt.Println("»» test » to hex: ", hex.EncodeToString(v))
 
 				businessNum := c.MsgType(hex.EncodeToString(v[:2]))
 				if businessNum != 9999 {
@@ -172,7 +174,7 @@ func (c *Connection) StartReader() {
 				}
 			}
 
-			fmt.Println("»» test » connID=", c.ConnID, " --------------------------------------")
+			fmt.Println("»» test » time=", time.Now().Format("20060102"), "& connID=", c.ConnID, " --------------------------------------")
 		}
 	}
 }
@@ -254,6 +256,8 @@ func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 		return errors.New("»» connection closed when send msg")
 	}
 
+	_ = msgID
+
 	//将data封包，并且发送
 	//dp := c.TCPServer.Packet()
 	//msg, err := dp.Pack(NewMsgPackage(msgID, data))
@@ -280,6 +284,8 @@ func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 		return errors.New("»» connection closed when send buff msg")
 	}
 
+	_ = msgID
+
 	//将data封包，并且发送
 	//dp := c.TCPServer.Packet()
 	//msg, err := dp.Pack(NewMsgPackage(msgID, data))
@@ -300,7 +306,7 @@ func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 	//写回客户端
 	//c.msgBuffChan <- msg
 
-	return nil
+	//return nil
 }
 
 //SetProperty 设置链接属性
@@ -334,7 +340,7 @@ func (c *Connection) RemoveProperty(key string) {
 	delete(c.property, key)
 }
 
-//返回ctx，用于用户自定义的go程获取连接退出状态
+// Context 返回ctx，用于用户自定义的go程获取连接退出状态
 func (c *Connection) Context() context.Context {
 	return c.ctx
 }
