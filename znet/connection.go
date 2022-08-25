@@ -174,7 +174,7 @@ func (c *Connection) StartReader() {
 				}
 			}
 
-			fmt.Println("»» test » time=", time.Now().Format("20060102"), "& connID=", c.ConnID, " --------------------------------------")
+			fmt.Println("»» test » time=", time.Now().Format("2006-01-02 15:04:05"), "& connID=", c.ConnID, " --------------------------------------")
 		}
 	}
 }
