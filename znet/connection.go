@@ -121,9 +121,8 @@ func (c *Connection) StartReader() {
 			}
 
 			// 测试: 打出收到的二进制文件
-			fmt.Println("»» test » --------------------------------------")
-			fmt.Println("»» test » get client source data byte", bufSource[:numSource])
-			fmt.Println("»» test » to hex: ", hex.EncodeToString(bufSource[:numSource]))
+			fmt.Println("»» test » start » --------------------------------------")
+			fmt.Println("»» test » source to hex: ", hex.EncodeToString(bufSource[:numSource]))
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
@@ -165,7 +164,6 @@ func (c *Connection) StartReader() {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
 
-				fmt.Println("»» test » get client data", v)
 				fmt.Println("»» test » to hex: ", hex.EncodeToString(v))
 
 				businessNum := c.MsgType(hex.EncodeToString(v[:2]))
@@ -174,14 +172,14 @@ func (c *Connection) StartReader() {
 				}
 			}
 
-			fmt.Println("»» test » time=", time.Now().Format("2006-01-02 15:04:05"), "& connID=", c.ConnID, " --------------------------------------")
+			fmt.Println("»» test » end & time=", time.Now().Format("2006-01-02 15:04:05"), "& connID=", c.ConnID, " --------------------------------------")
 		}
 	}
 }
 
 func (c *Connection) MsgType(no string) uint32 {
 	switch no {
-	case "0200":
+	case "0200", "0203":
 		return uint32(0)
 
 	case "0b05":
