@@ -167,12 +167,6 @@ func (c *Connection) StartReader() {
 				fmt.Println("»» test » to hex: ", hex.EncodeToString(v))
 
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
-
-				// 9999 err 抛出
-				// businessNum := c.MsgType(hex.EncodeToString(v[:2]))
-				// if businessNum != 9999 {
-				//	 c.SendReqToTaskQueue(businessNum, v, uint32(len(v)))
-				// }
 			}
 
 			fmt.Println("»» test » end & time=", time.Now().Format("2006-01-02 15:04:05"), "& connID=", c.ConnID, " --------------------------------------")
