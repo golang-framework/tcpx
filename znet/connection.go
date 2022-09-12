@@ -14,7 +14,7 @@ import (
 	"github.com/golang-framework/tcpx/ziface"
 )
 
-//Connection 链接
+// Connection 链接
 type Connection struct {
 	//当前Conn属于哪个Server
 	TCPServer ziface.IServer
@@ -39,7 +39,7 @@ type Connection struct {
 	isClosed bool
 }
 
-//NewConnection 创建连接的方法
+// NewConnection 创建连接的方法
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandle) *Connection {
 	//初始化Conn属性
 	c := &Connection{
@@ -57,7 +57,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 	return c
 }
 
-//StartWriter 写消息Goroutine， 用户将数据发送给客户端
+// StartWriter 写消息Goroutine， 用户将数据发送给客户端
 func (c *Connection) StartWriter() {
 	fmt.Println("»» » writer goroutine is running «")
 	defer fmt.Println("»» » conn writer exit « ", c.RemoteAddr().String())
@@ -81,7 +81,7 @@ func (c *Connection) StartWriter() {
 	}
 }
 
-//StartReader 读消息Goroutine，用于从客户端中读取数据
+// StartReader 读消息Goroutine，用于从客户端中读取数据
 func (c *Connection) StartReader() {
 	fmt.Println("»» » reader goroutine is running «")
 	defer fmt.Println("»» » conn reader exit « ", c.RemoteAddr().String())
@@ -119,10 +119,6 @@ func (c *Connection) StartReader() {
 			if errSource != nil {
 				return
 			}
-
-			// 测试: 打出收到的二进制文件
-			//fmt.Println("»» test » start » --------------------------------------")
-			//fmt.Println("»» test » source to hex: ", hex.EncodeToString(bufSource[:numSource]))
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
@@ -164,13 +160,8 @@ func (c *Connection) StartReader() {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
 
-				//fmt.Println("»» test » to hex: ", hex.EncodeToString(v))
-
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 			}
-
-			//fmt.Println("»» test » end & time=", time.Now().Format("2006-01-02 15:04:05"), "& connID=", c.ConnID, " --------------------------------------")
-			//fmt.Println("»« ----")
 		}
 	}
 }
@@ -216,7 +207,7 @@ func (c *Connection) SendReqToTaskQueue(msgId uint32, data []byte, dataLen uint3
 	}
 }
 
-//Start 启动连接，让当前连接开始工作
+// Start 启动连接，让当前连接开始工作
 func (c *Connection) Start() {
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 	//1 开启用户从客户端读取数据流程的Goroutine
@@ -233,27 +224,27 @@ func (c *Connection) Start() {
 	}
 }
 
-//Stop 停止连接，结束当前连接状态M
+// Stop 停止连接，结束当前连接状态M
 func (c *Connection) Stop() {
 	c.cancel()
 }
 
-//GetTCPConnection 从当前连接获取原始的socket TCPConn
+// GetTCPConnection 从当前连接获取原始的socket TCPConn
 func (c *Connection) GetTCPConnection() *net.TCPConn {
 	return c.Conn
 }
 
-//GetConnID 获取当前连接ID
+// GetConnID 获取当前连接ID
 func (c *Connection) GetConnID() uint32 {
 	return c.ConnID
 }
 
-//RemoteAddr 获取远程客户端地址信息
+// RemoteAddr 获取远程客户端地址信息
 func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-//SendMsg 直接将Message数据发送数据给远程的TCP客户端
+// SendMsg 直接将Message数据发送数据给远程的TCP客户端
 func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 	c.RLock()
 	defer c.RUnlock()
@@ -278,11 +269,11 @@ func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 	return err
 }
 
-//SendBuffMsg  发生BuffMsg
+// SendBuffMsg  发生BuffMsg
 func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 	c.RLock()
 	defer c.RUnlock()
-	idleTimeout := time.NewTimer(5 * time.Millisecond)
+	idleTimeout := time.NewTimer(50 * time.Millisecond)
 	defer idleTimeout.Stop()
 
 	if c.isClosed == true {
@@ -314,7 +305,7 @@ func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 	//return nil
 }
 
-//SetProperty 设置链接属性
+// SetProperty 设置链接属性
 func (c *Connection) SetProperty(key string, value interface{}) {
 	c.propertyLock.Lock()
 	defer c.propertyLock.Unlock()
@@ -325,7 +316,7 @@ func (c *Connection) SetProperty(key string, value interface{}) {
 	c.property[key] = value
 }
 
-//GetProperty 获取链接属性
+// GetProperty 获取链接属性
 func (c *Connection) GetProperty(key string) (interface{}, error) {
 	c.propertyLock.Lock()
 	defer c.propertyLock.Unlock()
@@ -337,7 +328,7 @@ func (c *Connection) GetProperty(key string) (interface{}, error) {
 	return nil, errors.New("»» no property found")
 }
 
-//RemoveProperty 移除链接属性
+// RemoveProperty 移除链接属性
 func (c *Connection) RemoveProperty(key string) {
 	c.propertyLock.Lock()
 	defer c.propertyLock.Unlock()
