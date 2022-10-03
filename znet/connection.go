@@ -273,7 +273,7 @@ func (c *Connection) SendMsg(msgID uint32, data []byte) error {
 func (c *Connection) SendBuffMsg(msgID uint32, data []byte) error {
 	c.RLock()
 	defer c.RUnlock()
-	idleTimeout := time.NewTimer(50 * time.Millisecond)
+	idleTimeout := time.NewTimer(500 * time.Millisecond)
 	defer idleTimeout.Stop()
 
 	if c.isClosed == true {
