@@ -152,12 +152,12 @@ func (c *Connection) StartReader() {
 			}
 
 			for _, v := range res {
-				if bytes.Contains(v, []byte{0x7d, 0x01}) {
-					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-				}
-
 				if bytes.Contains(v, []byte{0x7d, 0x02}) {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+				}
+				
+				if bytes.Contains(v, []byte{0x7d, 0x01}) {
+					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
 				}
 
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
