@@ -155,7 +155,7 @@ func (c *Connection) StartReader() {
 				if bytes.Contains(v, []byte{0x7d, 0x02}) {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
-				
+
 				if bytes.Contains(v, []byte{0x7d, 0x01}) {
 					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
 				}
@@ -168,7 +168,7 @@ func (c *Connection) StartReader() {
 
 func (c *Connection) MsgType(no string) uint32 {
 	switch no {
-	case "0200", "0203":
+	case "0200":
 		return uint32(0)
 
 	case "0b05":
@@ -179,6 +179,9 @@ func (c *Connection) MsgType(no string) uint32 {
 
 	case "0b04":
 		return uint32(3)
+
+	case "0203":
+		return uint32(4)
 
 	default:
 		return uint32(9999)
