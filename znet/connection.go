@@ -183,6 +183,9 @@ func (c *Connection) MsgType(no string) uint32 {
 	case "0203":
 		return uint32(4)
 
+	case "9210":
+		return uint32(5)
+
 	default:
 		return uint32(9999)
 	}
