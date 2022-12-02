@@ -13,6 +13,6 @@ var (
 	MaxPacketSize uint32 = 4096
 
 	MaxWorkerPoolSize uint32 = 10
-	MaxWorkerTasksLen uint32 = 10240
-	MaxMsgChanLen     uint32 = 10240
+	MaxWorkerTasksLen uint32 = 1048576
+	MaxMsgChanLen     uint32 = 1048576
 )
