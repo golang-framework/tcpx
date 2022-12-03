@@ -3,6 +3,8 @@ module github.com/golang-framework/tcpx
 go 1.13
 
 require (
-	github.com/golang/protobuf v1.3.3
-	golang.org/x/net v0.0.0-20210415231046-e915ea6b2b7d // indirect
+	github.com/BurntSushi/toml v1.2.1 // indirect
+	go.uber.org/zap v1.24.0
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

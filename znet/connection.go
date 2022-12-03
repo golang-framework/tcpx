@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang-framework/tcpx/confs"
+	"github.com/golang-framework/tcpx/z"
 	"github.com/golang-framework/tcpx/ziface"
 )
 
@@ -120,6 +121,10 @@ func (c *Connection) StartReader() {
 				return
 			}
 
+			c.SendMsgToLogQueue(
+				hex.EncodeToString(bufSource[1:3]),
+				hex.EncodeToString(bufSource))
+
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 			if len(arrSource) < 3 {
 				break
@@ -163,6 +168,17 @@ func (c *Connection) StartReader() {
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 			}
 		}
+	}
+}
+
+func (c *Connection) SendMsgToLogQueue(no string, err string) {
+	switch no {
+	case "9210":
+		go z.Set9210ToZ(err)
+		return
+
+	default:
+		return
 	}
 }
 
