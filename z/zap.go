@@ -14,19 +14,44 @@ import (
 )
 
 var (
+	zoErr *zap.SugaredLogger = nil
 	z9210 *zap.SugaredLogger = nil
 
+	qoErr = make(chan *soErr, 1024)
 	q9210 = make(chan *s9210, 2048)
 )
 
 type (
+	soErr struct {
+		err string
+	}
+
 	s9210 struct {
 		err string
 	}
 )
 
 func init() {
+	go startOErrInQueue()
 	go start9210InQueue()
+}
+
+func SetOErrToZ(err string) {
+	q9210 <- &s9210{err: err}
+}
+
+func startOErrInQueue() {
+	for {
+		select {
+		case d, ok := <-qoErr:
+			if ok == false {
+				break
+			}
+
+			xoErr().Info(d.err)
+			break
+		}
+	}
 }
 
 func Set9210ToZ(err string) {
@@ -47,6 +72,11 @@ func start9210InQueue() {
 	}
 }
 
+func xoErr() *zap.SugaredLogger {
+	zoErr = z("err")
+	return zoErr
+}
+
 func x9210() *zap.SugaredLogger {
 	z9210 = z("9210")
 	return z9210
@@ -57,6 +87,10 @@ func z(mode string) *zap.SugaredLogger {
 	var zWriteSyncerFile = mode
 
 	switch mode {
+	case "err":
+		z = zoErr
+		break
+
 	case "9210":
 		z = z9210
 		break
