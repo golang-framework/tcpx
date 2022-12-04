@@ -123,7 +123,7 @@ func (c *Connection) StartReader() {
 				break
 			}
 
-			if bytes.Equal(bufPre, []byte{0x7e}) == false {
+			if bytes.Equal(bufPre, []byte{0x7e}) {
 				if bytes.Equal(bufPre, []byte{0x00}) == false {
 					go z.SetOErrToZ(fmt.Sprintf("Tag != 0x7e, sys break, Tag:%v", hex.EncodeToString(bufPre)))
 				}
@@ -135,7 +135,15 @@ func (c *Connection) StartReader() {
 			res := buf.Bytes()
 			buf.Reset()
 
-			fmt.Println(hex.EncodeToString(res))
+			if bytes.Contains(res, []byte{0x7d, 0x02}) {
+				res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+			}
+
+			if bytes.Contains(res, []byte{0x7d, 0x01}) {
+				res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+			}
+
+			c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
 
 			//msgHeaderLen := 12
 			//bufSrcHeader := make([]byte, msgHeaderLen)
@@ -217,6 +225,11 @@ func (c *Connection) StartReader() {
 }
 
 func (c *Connection) ioReader(buf *bytes.Buffer) {
+	if len(buf.Bytes()) > 1024 {
+		go z.SetOErrToZ("add io buf length > 1024")
+		return
+	}
+
 	bufSrc := make([]byte, 1)
 	_, errSrc := io.ReadFull(c.Conn, bufSrc)
 	if errSrc != nil {
