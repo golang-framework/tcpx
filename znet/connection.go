@@ -171,12 +171,12 @@ func (c *Connection) StartReader() {
 			//}
 			// -
 
-			bufSource := make([]byte, 32)
+			bufSource := make([]byte, 1024)
 			_, errSource := io.ReadFull(c.Conn, bufSource)
 			if errSource != nil {
 				return
 			}
-
+			fmt.Println("--", hex.EncodeToString(bufSource))
 			//bufSource := make([]byte, 32)
 			//_, errSource := c.Conn.Read(bufSource)
 			//if errSource != nil {
