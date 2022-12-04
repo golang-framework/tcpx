@@ -37,8 +37,6 @@ type Connection struct {
 	propertyLock sync.Mutex
 	//当前连接的关闭状态
 	isClosed bool
-
-	buf bytes.Buffer
 }
 
 // NewConnection 创建连接的方法
@@ -89,6 +87,8 @@ func (c *Connection) StartReader() {
 	defer fmt.Println("»» » conn reader exit « ", c.RemoteAddr().String())
 	defer c.Stop()
 
+	var buf bytes.Buffer
+
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -133,12 +133,10 @@ func (c *Connection) StartReader() {
 				break
 			}
 
-			fmt.Println(hex.EncodeToString(bufSource))
-
 			for _, v := range bufSource {
 				if bytes.Equal([]byte{v}, []byte{0x7e}) {
-					if c.buf.Len() > 0 {
-						res := c.buf.Bytes()
+					if buf.Len() > 0 {
+						res := buf.Bytes()
 
 						if bytes.Contains(res, []byte{0x7d, 0x02}) {
 							res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
@@ -148,11 +146,11 @@ func (c *Connection) StartReader() {
 							res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
 						}
 
-						c.buf.Reset()
+						buf.Reset()
 						go c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
 					}
 				} else {
-					c.buf.Write([]byte{v})
+					buf.Write([]byte{v})
 				}
 			}
 		}
