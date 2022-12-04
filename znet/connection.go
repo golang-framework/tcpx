@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -117,17 +118,17 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			//bufSource := make([]byte, 32)
-			//_, errSource := io.ReadFull(c.Conn, bufSource)
-			//if errSource != nil {
-			//	return
-			//}
-
 			bufSource := make([]byte, 32)
-			_, errSource := c.Conn.Read(bufSource)
+			_, errSource := io.ReadFull(c.Conn, bufSource)
 			if errSource != nil {
 				return
 			}
+
+			//bufSource := make([]byte, 32)
+			//_, errSource := c.Conn.Read(bufSource)
+			//if errSource != nil {
+			//	return
+			//}
 
 			if len(bufSource) < 1 {
 				break
