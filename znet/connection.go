@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -171,17 +170,19 @@ func (c *Connection) StartReader() {
 			//}
 			// -
 
-			bufSource := make([]byte, 1024)
-			_, errSource := io.ReadFull(c.Conn, bufSource)
-			if errSource != nil {
-				return
-			}
-			fmt.Println("**", hex.EncodeToString(bufSource))
-			//bufSource := make([]byte, 32)
-			//_, errSource := c.Conn.Read(bufSource)
+			//bufSource := make([]byte, 1024)
+			//_, errSource := io.ReadFull(c.Conn, bufSource)
 			//if errSource != nil {
 			//	return
 			//}
+
+			bufSource := make([]byte, 1024)
+			_, errSource := c.Conn.Read(bufSource)
+			if errSource != nil {
+				return
+			}
+
+			fmt.Println("**", hex.EncodeToString(bufSource))
 
 			if len(bufSource) < 1 {
 				break
@@ -191,18 +192,20 @@ func (c *Connection) StartReader() {
 				if bytes.Equal([]byte{v}, []byte{0x7e}) {
 					if c.buf.Len() > 0 {
 						res := c.buf.Bytes()
-
-						if bytes.Contains(res, []byte{0x7d, 0x02}) {
-							res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
-						}
-
-						if bytes.Contains(res, []byte{0x7d, 0x01}) {
-							res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-						}
-
 						c.buf.Reset()
-						fmt.Println("--", hex.EncodeToString(res))
-						go c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
+
+						if bytes.Equal(res[:2], []byte{0x00, 0x00}) == false {
+							if bytes.Contains(res, []byte{0x7d, 0x02}) {
+								res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+							}
+
+							if bytes.Contains(res, []byte{0x7d, 0x01}) {
+								res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+							}
+
+							fmt.Println("--", hex.EncodeToString(res))
+							go c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
+						}
 					}
 				} else {
 					c.buf.Write([]byte{v})
