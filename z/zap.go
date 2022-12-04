@@ -37,7 +37,7 @@ func init() {
 }
 
 func SetOErrToZ(err string) {
-	q9210 <- &s9210{err: err}
+	qoErr <- &soErr{err: err}
 }
 
 func startOErrInQueue() {
