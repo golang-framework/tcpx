@@ -6,13 +6,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/golang-framework/tcpx/confs"
-	"github.com/golang-framework/tcpx/z"
 	"github.com/golang-framework/tcpx/ziface"
 )
 
@@ -39,6 +37,8 @@ type Connection struct {
 	propertyLock sync.Mutex
 	//当前连接的关闭状态
 	isClosed bool
+
+	buf bytes.Buffer
 }
 
 // NewConnection 创建连接的方法
@@ -89,8 +89,6 @@ func (c *Connection) StartReader() {
 	defer fmt.Println("»» » conn reader exit « ", c.RemoteAddr().String())
 	defer c.Stop()
 
-	var buf bytes.Buffer
-
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -119,22 +117,29 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			bufSource := make([]byte, 1024)
-			_, errSource := io.ReadFull(c.Conn, bufSource)
+			//bufSource := make([]byte, 32)
+			//_, errSource := io.ReadFull(c.Conn, bufSource)
+			//if errSource != nil {
+			//	return
+			//}
+
+			bufSource := make([]byte, 32)
+			_, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
-				go z.SetOErrToZ(fmt.Sprintf("reader buf source err:%v", errSource.Error()))
-				break
+				return
 			}
 
 			if len(bufSource) < 1 {
-				go z.SetOErrToZ("reader buf source length < 1")
 				break
 			}
 
+			fmt.Println(hex.EncodeToString(bufSource))
+
 			for _, v := range bufSource {
 				if bytes.Equal([]byte{v}, []byte{0x7e}) {
-					if buf.Len() > 0 {
-						res := buf.Bytes()
+					if c.buf.Len() > 0 {
+						res := c.buf.Bytes()
+
 						if bytes.Contains(res, []byte{0x7d, 0x02}) {
 							res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 						}
@@ -143,25 +148,14 @@ func (c *Connection) StartReader() {
 							res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
 						}
 
-						buf.Reset()
+						c.buf.Reset()
 						go c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
 					}
 				} else {
-					buf.Write([]byte{v})
+					c.buf.Write([]byte{v})
 				}
 			}
 		}
-	}
-}
-
-func (c *Connection) SendMsgToLogQueue(no string, err string) {
-	switch no {
-	case "9210":
-		go z.Set9210ToZ(err)
-		return
-
-	default:
-		return
 	}
 }
 
