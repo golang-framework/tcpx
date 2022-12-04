@@ -176,7 +176,7 @@ func (c *Connection) StartReader() {
 			if errSource != nil {
 				return
 			}
-			fmt.Println("--", hex.EncodeToString(bufSource))
+			fmt.Println("**", hex.EncodeToString(bufSource))
 			//bufSource := make([]byte, 32)
 			//_, errSource := c.Conn.Read(bufSource)
 			//if errSource != nil {
