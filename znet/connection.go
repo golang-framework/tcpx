@@ -118,7 +118,7 @@ func (c *Connection) StartReader() {
 			//-<=======================================================================
 
 			// -
-			bufSource := make([]byte, 10240)
+			bufSource := make([]byte, 51200)
 			numSource, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
 				return
