@@ -89,8 +89,6 @@ func (c *Connection) StartReader() {
 	defer fmt.Println("»» » conn reader exit « ", c.RemoteAddr().String())
 	defer c.Stop()
 
-	//var buf bytes.Buffer
-
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -127,37 +125,57 @@ func (c *Connection) StartReader() {
 			}
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
+			if len(arrSource) == 2 {
+				if c.buf.Len() > 0 {
+					_, _ = c.buf.Write(arrSource[0])
+					arrSource = append(arrSource, c.buf.Bytes())
+					c.buf.Reset()
+				}
+
+				if len(arrSource) == 3 {
+					arrSource = arrSource[1:]
+					arrSource = append(arrSource, []byte{})
+				}
+			}
+
 			if len(arrSource) < 3 {
-				break
-			}
-
-			startNum := 0
-			if len(arrSource[startNum]) != 0 {
-				arrSource = arrSource[1:]
-			}
-
-			endedNum := len(arrSource) - 1
-			if len(arrSource[endedNum]) != 0 {
-				arrSource = arrSource[:endedNum-1]
-			}
-
-			if len(arrSource) <= 0 {
 				break
 			}
 
 			res := make([][]byte, 0)
 
-			for _, src := range arrSource {
-				if len(src) != 0 {
-					res = append(res, src)
+			if len(arrSource[0]) != 0 {
+				if c.buf.Len() > 0 {
+					_, _ = c.buf.Write(arrSource[0])
+					res = append(res, c.buf.Bytes())
+					c.buf.Reset()
 				}
+				arrSource = arrSource[1:]
 			}
 
-			if len(res) < 1 {
+			num := len(arrSource) - 1
+			if len(arrSource[num]) != 0 {
+				if c.buf.Len() > 0 {
+					c.buf.Reset()
+				}
+
+				_, _ = c.buf.Write(arrSource[num])
+				arrSource = arrSource[:num-1]
+			}
+
+			if len(arrSource) > 0 {
+				res = append(res, arrSource...)
+			}
+
+			if len(res) <= 0 {
 				break
 			}
 
 			for _, v := range res {
+				if len(v) == 0 {
+					continue
+				}
+
 				if bytes.Contains(v, []byte{0x7d, 0x02}) {
 					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 				}
