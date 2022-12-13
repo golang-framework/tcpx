@@ -117,14 +117,13 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			bufSource := make([]byte, 51200)
+			bufSource := make([]byte, 5120)
 			numSource, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
 				return
 			}
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
-			bufSource = make([]byte, 0)
 
 			if len(arrSource) == 1 {
 				if c.buf.Len() > 0 {
@@ -136,10 +135,19 @@ func (c *Connection) StartReader() {
 			}
 
 			if len(arrSource) == 2 {
-				if c.buf.Len() > 0 {
-					_, _ = c.buf.Write(arrSource[0])
-					arrSource = append(arrSource, c.buf.Bytes())
-					c.buf.Reset()
+				if len(arrSource[0]) != 0 {
+					if c.buf.Len() > 0 {
+						_, _ = c.buf.Write(arrSource[0])
+						arrSource = append(arrSource, c.buf.Bytes())
+						c.buf.Reset()
+					}
+				}
+
+				if len(arrSource[1]) != 0 {
+					if c.buf.Len() > 0 {
+						c.buf.Reset()
+					}
+					_, _ = c.buf.Write(arrSource[1])
 				}
 
 				if len(arrSource) == 3 {
@@ -168,7 +176,6 @@ func (c *Connection) StartReader() {
 				if c.buf.Len() > 0 {
 					c.buf.Reset()
 				}
-
 				_, _ = c.buf.Write(arrSource[num])
 				arrSource = arrSource[:num-1]
 			}
