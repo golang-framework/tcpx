@@ -126,8 +126,8 @@ func (c *Connection) StartReader() {
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
 
 			if len(arrSource) == 1 {
-				if c.buf.Len() > 0 {
-					if len(arrSource[0]) != 0 {
+				if len(arrSource[0]) != 0 {
+					if c.buf.Len() > 0 {
 						_, _ = c.buf.Write(arrSource[0])
 					}
 				}
