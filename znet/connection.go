@@ -117,7 +117,6 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			// -
 			bufSource := make([]byte, 51200)
 			numSource, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
@@ -125,6 +124,17 @@ func (c *Connection) StartReader() {
 			}
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
+			bufSource = make([]byte, 0)
+
+			if len(arrSource) == 1 {
+				if c.buf.Len() > 0 {
+					if len(arrSource[0]) != 0 {
+						_, _ = c.buf.Write(arrSource[0])
+					}
+				}
+				break
+			}
+
 			if len(arrSource) == 2 {
 				if c.buf.Len() > 0 {
 					_, _ = c.buf.Write(arrSource[0])
@@ -186,50 +196,6 @@ func (c *Connection) StartReader() {
 
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 			}
-			// -
-
-			//bufSource := make([]byte, 1024)
-			//_, errSource := io.ReadFull(c.Conn, bufSource)
-			//if errSource != nil {
-			//	return
-			//}
-
-			// ---
-			//bufSource := make([]byte, 1024)
-			//_, errSource := c.Conn.Read(bufSource)
-			//if errSource != nil {
-			//	return
-			//}
-			//
-			//fmt.Println("**", hex.EncodeToString(bufSource))
-			//
-			//if len(bufSource) < 1 {
-			//	break
-			//}
-			//
-			//for _, v := range bufSource {
-			//	if bytes.Equal([]byte{v}, []byte{0x7e}) {
-			//		if c.buf.Len() > 0 {
-			//			res := c.buf.Bytes()
-			//			c.buf.Reset()
-			//
-			//			if bytes.Equal(res[:2], []byte{0x00, 0x00}) == false {
-			//				if bytes.Contains(res, []byte{0x7d, 0x02}) {
-			//					res = bytes.Replace(res, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
-			//				}
-			//
-			//				if bytes.Contains(res, []byte{0x7d, 0x01}) {
-			//					res = bytes.Replace(res, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-			//				}
-			//
-			//				fmt.Println("--", hex.EncodeToString(res))
-			//				go c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(res[:2])), res, uint32(len(res)))
-			//			}
-			//		}
-			//	} else {
-			//		c.buf.Write([]byte{v})
-			//	}
-			//}
 		}
 	}
 }
