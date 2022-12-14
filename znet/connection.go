@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -117,92 +118,131 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			bufSource := make([]byte, 5120)
-			numSource, errSource := c.Conn.Read(bufSource)
-			if errSource != nil {
+			bufSource := make([]byte, 1)
+			if _, err := io.ReadFull(c.Conn, bufSource); err != nil {
 				return
 			}
 
-			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
-
-			if len(arrSource) == 1 {
-				if len(arrSource[0]) != 0 {
-					if c.buf.Len() > 0 {
-						_, _ = c.buf.Write(arrSource[0])
-					}
-				}
-				break
-			}
-
-			if len(arrSource) == 2 {
-				if len(arrSource[0]) != 0 {
-					if c.buf.Len() > 0 {
-						_, _ = c.buf.Write(arrSource[0])
-						arrSource = append(arrSource, c.buf.Bytes())
-						c.buf.Reset()
-					}
-				}
-
-				if len(arrSource[1]) != 0 {
-					if c.buf.Len() > 0 {
-						c.buf.Reset()
-					}
-					_, _ = c.buf.Write(arrSource[1])
-				}
-
-				if len(arrSource) == 3 {
-					arrSource = arrSource[1:]
-					arrSource = append(arrSource, []byte{})
-				}
-			}
-
-			if len(arrSource) < 3 {
-				break
-			}
-
-			res := make([][]byte, 0)
-
-			if len(arrSource[0]) != 0 {
-				if c.buf.Len() > 0 {
-					_, _ = c.buf.Write(arrSource[0])
-					res = append(res, c.buf.Bytes())
+			var src = make([]byte, 0)
+			if bytes.Equal(bufSource, []byte{0x7e}) {
+				if c.buf.Len() == 0 {
+					break
+				} else {
+					src = c.buf.Bytes()
 					c.buf.Reset()
 				}
-				arrSource = arrSource[1:]
-			}
-
-			num := len(arrSource) - 1
-			if len(arrSource[num]) != 0 {
-				if c.buf.Len() > 0 {
-					c.buf.Reset()
-				}
-				_, _ = c.buf.Write(arrSource[num])
-				arrSource = arrSource[:num-1]
-			}
-
-			if len(arrSource) > 0 {
-				res = append(res, arrSource...)
-			}
-
-			if len(res) <= 0 {
+			} else {
+				_, _ = c.buf.Write(bufSource)
 				break
 			}
 
-			for _, v := range res {
-				if len(v) == 0 {
-					continue
-				}
-
-				if bytes.Contains(v, []byte{0x7d, 0x02}) {
-					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
-				}
-
-				if bytes.Contains(v, []byte{0x7d, 0x01}) {
-					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-				}
-
-				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
+			if len(src) == 0 {
+				break
 			}
+
+			if bytes.Contains(src, []byte{0x7d, 0x02}) {
+				src = bytes.Replace(src, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+			}
+
+			if bytes.Contains(src, []byte{0x7d, 0x01}) {
+				src = bytes.Replace(src, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+			}
+
+			c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(src[:2])), src, uint32(len(src)))
+
+			break
+			//--
+			//bufSource := make([]byte, 5120)
+			//numSource, errSource := c.Conn.Read(bufSource)
+			//if errSource != nil {
+			//	return
+			//}
+			//
+			//arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
+			//
+			//if len(arrSource) == 1 {
+			//	if len(arrSource[0]) != 0 {
+			//		if c.buf.Len() > 0 {
+			//			_, _ = c.buf.Write(arrSource[0])
+			//		}
+			//	}
+			//	break
+			//}
+			//
+			//if len(arrSource) == 2 {
+			//	if len(arrSource[0]) == 0 && len(arrSource[1]) == 0 {
+			//		break
+			//	}
+			//
+			//	if len(arrSource[0]) != 0 {
+			//		if c.buf.Len() > 0 {
+			//			_, _ = c.buf.Write(arrSource[0])
+			//			arrSource = append(arrSource, c.buf.Bytes())
+			//			c.buf.Reset()
+			//		}
+			//	}
+			//
+			//	if len(arrSource[1]) != 0 {
+			//		if c.buf.Len() > 0 {
+			//			c.buf.Reset()
+			//		}
+			//		_, _ = c.buf.Write(arrSource[1])
+			//	}
+			//
+			//	if len(arrSource) == 3 {
+			//		arrSource = arrSource[1:]
+			//		arrSource = append(arrSource, []byte{})
+			//	}
+			//}
+			//
+			//if len(arrSource) < 3 {
+			//	break
+			//}
+			//
+			//res := make([][]byte, 0)
+			//
+			//if len(arrSource[0]) != 0 {
+			//	if c.buf.Len() > 0 {
+			//		_, _ = c.buf.Write(arrSource[0])
+			//		res = append(res, c.buf.Bytes())
+			//		c.buf.Reset()
+			//	}
+			//	arrSource = arrSource[1:]
+			//}
+			//
+			//num := len(arrSource) - 1
+			//if len(arrSource[num]) != 0 {
+			//	if c.buf.Len() > 0 {
+			//		c.buf.Reset()
+			//	}
+			//	_, _ = c.buf.Write(arrSource[num])
+			//	arrSource = arrSource[:num-1]
+			//}
+			//
+			//if len(arrSource) > 0 {
+			//	res = append(res, arrSource...)
+			//}
+			//
+			//if len(res) <= 0 {
+			//	break
+			//}
+			//
+			//for _, v := range res {
+			//	if len(v) == 0 {
+			//		continue
+			//	}
+			//
+			//	if bytes.Contains(v, []byte{0x7d, 0x02}) {
+			//		v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+			//	}
+			//
+			//	if bytes.Contains(v, []byte{0x7d, 0x01}) {
+			//		v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+			//	}
+			//
+			//	c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
+			//}
+			//--
 		}
 	}
 }
