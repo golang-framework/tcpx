@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -120,14 +119,21 @@ func (c *Connection) StartReader() {
 			//-<=======================================================================
 
 			c.lof.Lock()
+
 			bufSource := make([]byte, 1)
-			if _, err := io.ReadFull(c.Conn, bufSource); err != nil {
-				c.lof.Unlock()
+			numSource, errSource := c.Conn.Read(bufSource)
+			if errSource != nil {
+				c.lof.Lock()
 				return
 			}
 
+			if numSource != 1 {
+				c.lof.Lock()
+				break
+			}
+
 			var src = make([]byte, 0)
-			if bytes.Equal(bufSource, []byte{0x7e}) {
+			if bytes.Equal([]byte{bufSource[0]}, []byte{0x7e}) {
 				if c.buf.Len() == 0 {
 					c.lof.Unlock()
 					break
@@ -136,7 +142,7 @@ func (c *Connection) StartReader() {
 					c.buf.Reset()
 				}
 			} else {
-				_, _ = c.buf.Write(bufSource)
+				_ = c.buf.WriteByte(bufSource[0])
 				c.lof.Unlock()
 				break
 			}
