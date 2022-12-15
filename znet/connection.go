@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -119,92 +120,44 @@ func (c *Connection) StartReader() {
 			//-<=======================================================================
 
 			c.lof.Lock()
-
-			bufSource := make([]byte, 1024)
-			numSource, errSource := c.Conn.Read(bufSource)
-			if errSource != nil {
+			bufSource := make([]byte, 1)
+			if _, err := io.ReadFull(c.Conn, bufSource); err != nil {
 				c.lof.Unlock()
 				return
 			}
 
-			if numSource == 0 {
+			var src = make([]byte, 0)
+			if bytes.Equal(bufSource, []byte{0x7e}) {
+				if c.buf.Len() == 0 {
+					c.lof.Unlock()
+					break
+				} else {
+					src = c.buf.Bytes()
+					c.buf.Reset()
+				}
+			} else {
+				_, _ = c.buf.Write(bufSource)
 				c.lof.Unlock()
 				break
 			}
 
-			arrSource := make([][]byte, 0)
-			bytSource := bufSource[:numSource]
-			for _, b := range bytSource {
-				if bytes.Equal([]byte{b}, []byte{0x7e}) {
-					if c.buf.Len() == 0 {
-						continue
-					} else {
-						arrSource = append(arrSource, c.buf.Bytes())
-						c.buf.Reset()
-					}
-				} else {
-					_ = c.buf.WriteByte(b)
-					continue
-				}
-			}
-
 			c.lof.Unlock()
 
-			if len(arrSource) == 0 {
+			if len(src) == 0 {
 				break
 			}
 
-			for _, v := range arrSource {
-				if bytes.Contains(v, []byte{0x7d, 0x02}) {
-					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
-				}
-
-				if bytes.Contains(v, []byte{0x7d, 0x01}) {
-					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-				}
-
-				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
+			if bytes.Contains(src, []byte{0x7d, 0x02}) {
+				src = bytes.Replace(src, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
 			}
 
-			break
+			if bytes.Contains(src, []byte{0x7d, 0x01}) {
+				src = bytes.Replace(src, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+			}
 
-			//bufSource := make([]byte, 1)
-			//if _, err := io.ReadFull(c.Conn, bufSource); err != nil {
-			//	return
-			//}
-			//
-			//var src = make([]byte, 0)
-			//if bytes.Equal(bufSource, []byte{0x7e}) {
-			//	if c.buf.Len() == 0 {
-			//		break
-			//	} else {
-			//		src = c.buf.Bytes()
-			//		c.buf.Reset()
-			//	}
-			//} else {
-			//	_, _ = c.buf.Write(bufSource)
-			//	break
-			//}
-			//
-			//fmt.Println(hex.EncodeToString(src))
-			//fmt.Println("---")
-			//break
-			//
-			//if len(src) == 0 {
-			//	break
-			//}
-			//
-			//if bytes.Contains(src, []byte{0x7d, 0x02}) {
-			//	src = bytes.Replace(src, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
-			//}
-			//
-			//if bytes.Contains(src, []byte{0x7d, 0x01}) {
-			//	src = bytes.Replace(src, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-			//}
-			//
-			//c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(src[:2])), src, uint32(len(src)))
-			//
-			//break
+			c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(src[:2])), src, uint32(len(src)))
+
+			break
 		}
 	}
 }
