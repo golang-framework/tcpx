@@ -108,3 +108,96 @@ package _z_connection
 //
 //	c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 //}
+
+//--
+//bufSource := make([]byte, 5120)
+//numSource, errSource := c.Conn.Read(bufSource)
+//if errSource != nil {
+//	return
+//}
+//
+//arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
+//
+//if len(arrSource) == 1 {
+//	if len(arrSource[0]) != 0 {
+//		if c.buf.Len() > 0 {
+//			_, _ = c.buf.Write(arrSource[0])
+//		}
+//	}
+//	break
+//}
+//
+//if len(arrSource) == 2 {
+//	if len(arrSource[0]) == 0 && len(arrSource[1]) == 0 {
+//		break
+//	}
+//
+//	if len(arrSource[0]) != 0 {
+//		if c.buf.Len() > 0 {
+//			_, _ = c.buf.Write(arrSource[0])
+//			arrSource = append(arrSource, c.buf.Bytes())
+//			c.buf.Reset()
+//		}
+//	}
+//
+//	if len(arrSource[1]) != 0 {
+//		if c.buf.Len() > 0 {
+//			c.buf.Reset()
+//		}
+//		_, _ = c.buf.Write(arrSource[1])
+//	}
+//
+//	if len(arrSource) == 3 {
+//		arrSource = arrSource[1:]
+//		arrSource = append(arrSource, []byte{})
+//	}
+//}
+//
+//if len(arrSource) < 3 {
+//	break
+//}
+//
+//res := make([][]byte, 0)
+//
+//if len(arrSource[0]) != 0 {
+//	if c.buf.Len() > 0 {
+//		_, _ = c.buf.Write(arrSource[0])
+//		res = append(res, c.buf.Bytes())
+//		c.buf.Reset()
+//	}
+//	arrSource = arrSource[1:]
+//}
+//
+//num := len(arrSource) - 1
+//if len(arrSource[num]) != 0 {
+//	if c.buf.Len() > 0 {
+//		c.buf.Reset()
+//	}
+//	_, _ = c.buf.Write(arrSource[num])
+//	arrSource = arrSource[:num-1]
+//}
+//
+//if len(arrSource) > 0 {
+//	res = append(res, arrSource...)
+//}
+//
+//if len(res) <= 0 {
+//	break
+//}
+//
+//for _, v := range res {
+//	if len(v) == 0 {
+//		continue
+//	}
+//
+//	if bytes.Contains(v, []byte{0x7d, 0x02}) {
+//		v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+//	}
+//
+//	if bytes.Contains(v, []byte{0x7d, 0x01}) {
+//		v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+//	}
+//
+//	c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
+//}
+//--
