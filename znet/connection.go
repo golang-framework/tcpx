@@ -39,7 +39,6 @@ type Connection struct {
 	isClosed bool
 
 	buf bytes.Buffer
-	lof sync.Mutex
 }
 
 // NewConnection 创建连接的方法
@@ -118,52 +117,102 @@ func (c *Connection) StartReader() {
 			// - 2e				[BCC 校验码]
 			//-<=======================================================================
 
-			c.lof.Lock()
-
-			bufSource := make([]byte, 1)
+			bufSource := make([]byte, 5120)
 			numSource, errSource := c.Conn.Read(bufSource)
 			if errSource != nil {
-				c.lof.Lock()
 				return
 			}
 
-			if numSource != 1 {
-				c.lof.Lock()
+			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
+			if len(arrSource) == 1 {
+				if len(arrSource[0]) != 0 {
+					_, err := c.buf.Write(arrSource[0])
+					if err != nil {
+						fmt.Println("start arr 1, err:", err.Error())
+					}
+				}
 				break
 			}
 
-			var src = make([]byte, 0)
-			if bytes.Equal([]byte{bufSource[0]}, []byte{0x7e}) {
-				if c.buf.Len() == 0 {
-					c.lof.Unlock()
+			if len(arrSource) == 2 {
+				if len(arrSource[0]) == 0 && len(arrSource[1]) == 0 {
 					break
-				} else {
-					src = c.buf.Bytes()
+				}
+
+				if len(arrSource[0]) != 0 {
+					_, err := c.buf.Write(arrSource[0])
+					if err != nil {
+						fmt.Println("start arr 2:0, err:", err.Error())
+					}
+
+					arrSource = append(arrSource, c.buf.Bytes())
 					c.buf.Reset()
 				}
-			} else {
-				_ = c.buf.WriteByte(bufSource[0])
-				c.lof.Unlock()
+
+				if len(arrSource[1]) != 0 {
+					_, err := c.buf.Write(arrSource[1])
+					if err != nil {
+						fmt.Println("start arr 2:1, err:", err.Error())
+					}
+				}
+
+				if len(arrSource) == 3 {
+					arrSource = arrSource[1:]
+					arrSource = append(arrSource, []byte{})
+				}
+			}
+
+			if len(arrSource) < 3 {
 				break
 			}
 
-			c.lof.Unlock()
+			res := make([][]byte, 0)
 
-			if len(src) == 0 {
+			if len(arrSource[0]) != 0 {
+				_, err := c.buf.Write(arrSource[0])
+				if err != nil {
+					fmt.Println("start arr 3:0, err:", err.Error())
+				}
+
+				res = append(res, c.buf.Bytes())
+				c.buf.Reset()
+
+				arrSource = arrSource[1:]
+			}
+
+			num := len(arrSource) - 1
+			if len(arrSource[num]) != 0 {
+				_, err := c.buf.Write(arrSource[num])
+				if err != nil {
+					fmt.Println("start arr 3:1, err:", err.Error())
+				}
+
+				arrSource = arrSource[:num-1]
+			}
+
+			if len(arrSource) > 0 {
+				res = append(res, arrSource...)
+			}
+
+			if len(res) <= 0 {
 				break
 			}
 
-			if bytes.Contains(src, []byte{0x7d, 0x02}) {
-				src = bytes.Replace(src, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+			for _, v := range res {
+				if len(v) == 0 {
+					continue
+				}
+
+				if bytes.Contains(v, []byte{0x7d, 0x02}) {
+					v = bytes.Replace(v, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+				}
+
+				if bytes.Contains(v, []byte{0x7d, 0x01}) {
+					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+				}
+
+				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 			}
-
-			if bytes.Contains(src, []byte{0x7d, 0x01}) {
-				src = bytes.Replace(src, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
-			}
-
-			c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(src[:2])), src, uint32(len(src)))
-
-			break
 		}
 	}
 }

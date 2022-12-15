@@ -201,3 +201,49 @@ package _z_connection
 //	c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 //}
 //--
+
+//bufSource := make([]byte, 1024)
+//numSource, errSource := c.Conn.Read(bufSource)
+//if errSource != nil {
+//	return
+//}
+//if _, err := io.ReadAll(c.Conn, bufSource); err != nil {
+//	return
+//}
+
+//bufSource, _ := io.ReadAll(c.Conn)
+//
+//fmt.Println("---")
+//fmt.Println(bufSource)
+//fmt.Println(bytes.Split(bufSource, []byte{0x7e}))
+//break
+//var src = make([]byte, 0)
+//if bytes.Equal([]byte{bufSource[0]}, []byte{0x7e}) {
+//	if c.buf.Len() == 0 {
+//		break
+//	} else {
+//		src = c.buf.Bytes()
+//		c.buf.Reset()
+//	}
+//} else {
+//	_ = c.buf.WriteByte(bufSource[0])
+//	break
+//}
+//
+//fmt.Println(hex.EncodeToString(src))
+
+//if len(src) == 0 {
+//	break
+//}
+//
+//if bytes.Contains(src, []byte{0x7d, 0x02}) {
+//	src = bytes.Replace(src, []byte{0x7d, 0x02}, []byte{0x7e}, -1)
+//}
+//
+//if bytes.Contains(src, []byte{0x7d, 0x01}) {
+//	src = bytes.Replace(src, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
+//}
+//
+//c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(src[:2])), src, uint32(len(src)))
+
+//break
