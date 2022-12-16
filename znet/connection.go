@@ -38,7 +38,7 @@ type Connection struct {
 	//当前连接的关闭状态
 	isClosed bool
 
-	buf bytes.Buffer
+	buf *bytes.Buffer
 }
 
 // NewConnection 创建连接的方法
@@ -52,6 +52,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		MsgHandler:  msgHandler,
 		msgBuffChan: make(chan []byte, confs.MaxMsgChanLen),
 		property:    nil,
+		buf:         new(bytes.Buffer),
 	}
 
 	//将新创建的Conn添加到链接管理中
@@ -124,77 +125,44 @@ func (c *Connection) StartReader() {
 			}
 
 			arrSource := bytes.Split(bufSource[:numSource], []byte{0x7e})
-			if len(arrSource) == 1 {
-				if len(arrSource[0]) != 0 {
-					_, err := c.buf.Write(arrSource[0])
-					if err != nil {
-						fmt.Println("start arr 1, err:", err.Error())
-					}
-				}
-				break
-			}
-
-			if len(arrSource) == 2 {
-				if len(arrSource[0]) == 0 && len(arrSource[1]) == 0 {
-					break
-				}
-
-				if len(arrSource[0]) != 0 {
-					_, err := c.buf.Write(arrSource[0])
-					if err != nil {
-						fmt.Println("start arr 2:0, err:", err.Error())
-					}
-
-					arrSource = append(arrSource, c.buf.Bytes())
-					c.buf.Reset()
-				}
-
-				if len(arrSource[1]) != 0 {
-					_, err := c.buf.Write(arrSource[1])
-					if err != nil {
-						fmt.Println("start arr 2:1, err:", err.Error())
-					}
-				}
-
-				if len(arrSource) == 3 {
-					arrSource = arrSource[1:]
-					arrSource = append(arrSource, []byte{})
-				}
-			}
-
-			if len(arrSource) < 3 {
+			if len(arrSource) == 0 {
 				break
 			}
 
 			res := make([][]byte, 0)
+			for i, v := range arrSource {
+				if i == 0 {
+					if len(v) != 0 {
+						_, err := (*c.buf).Write(v)
+						if err != nil {
+							fmt.Println("start arr-0, err:", err.Error())
+						}
+					}
 
-			if len(arrSource[0]) != 0 {
-				_, err := c.buf.Write(arrSource[0])
-				if err != nil {
-					fmt.Println("start arr 3:0, err:", err.Error())
+					if c.buf.Len() > 0 {
+						b := (*c.buf).Bytes()
+						(*c.buf).Reset()
+						c.buf = new(bytes.Buffer)
+
+						res = append(res, b)
+					}
+				} else if i == len(arrSource)-1 {
+					if len(v) != 0 {
+						_, err := (*c.buf).Write(v)
+						if err != nil {
+							fmt.Println("start arr-1, err:", err.Error())
+						}
+					}
+				} else {
+					if len(v) == 0 {
+						continue
+					}
+
+					res = append(res, v)
 				}
-
-				res = append(res, c.buf.Bytes())
-				c.buf.Reset()
-
-				arrSource = arrSource[1:]
 			}
 
-			num := len(arrSource) - 1
-			if len(arrSource[num]) != 0 {
-				_, err := c.buf.Write(arrSource[num])
-				if err != nil {
-					fmt.Println("start arr 3:1, err:", err.Error())
-				}
-
-				arrSource = arrSource[:num-1]
-			}
-
-			if len(arrSource) > 0 {
-				res = append(res, arrSource...)
-			}
-
-			if len(res) <= 0 {
+			if len(res) < 1 {
 				break
 			}
 
