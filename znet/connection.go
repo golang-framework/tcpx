@@ -129,14 +129,18 @@ func (c *Connection) StartReader() {
 				break
 			}
 
+			if len(arrSource) == 1 {
+				if len(arrSource[0]) > 0 {
+					_, _ = (*c.buf).Write(arrSource[0])
+				}
+				break
+			}
+
 			res := make([][]byte, 0)
 			for i, v := range arrSource {
 				if i == 0 {
 					if len(v) != 0 {
-						_, err := (*c.buf).Write(v)
-						if err != nil {
-							fmt.Println("start arr-0, err:", err.Error())
-						}
+						_, _ = (*c.buf).Write(v)
 					}
 
 					if c.buf.Len() > 0 {
@@ -148,10 +152,7 @@ func (c *Connection) StartReader() {
 					}
 				} else if i == len(arrSource)-1 {
 					if len(v) != 0 {
-						_, err := (*c.buf).Write(v)
-						if err != nil {
-							fmt.Println("start arr-1, err:", err.Error())
-						}
+						_, _ = (*c.buf).Write(v)
 					}
 				} else {
 					if len(v) == 0 {
