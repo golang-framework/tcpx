@@ -180,6 +180,10 @@ func (c *Connection) StartReader() {
 					v = bytes.Replace(v, []byte{0x7d, 0x01}, []byte{0x7d}, -1)
 				}
 
+				if len(v) < 12 {
+					continue
+				}
+
 				c.SendReqToTaskQueue(c.MsgType(hex.EncodeToString(v[:2])), v, uint32(len(v)))
 			}
 		}
