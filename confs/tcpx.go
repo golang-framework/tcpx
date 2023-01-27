@@ -5,7 +5,7 @@
 package confs
 
 var (
-	Name    = "Vehicle Management System"
+	Name    = "VEHICLE MANAGEMENT SYSTEM"
 	TCPHost = "0.0.0.0"
 	TCPPort = 8999
 
